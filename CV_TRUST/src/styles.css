@@ -1,0 +1,87 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-[#12304A]: #12304A;
+  --color-[#246B94]: #246B94;
+  --color-[#F7F9FC]: #F7F9FC;
+  --color-[#E4EAF0]: #E4EAF0;
+}
+
+:root {
+  --radius: 0.5rem;
+  --background: #F6F8FB;
+  --foreground: #142033;
+  --card: #FFFFFF;
+  --card-foreground: #142033;
+  --border: #E4EAF0;
+}
+
+.dark {
+  --background: #090d16;
+  --foreground: #F8FAFC;
+  --card: #0f172a;
+  --card-foreground: #F8FAFC;
+  --border: #1E293B;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}
+
+/* Subtle Liquid Glass Utility Classes */
+.glass-surface {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(228, 234, 240, 0.8);
+  box-shadow: 0 4px 20px -2px rgba(18, 48, 74, 0.05);
+}
+
+.dark .glass-surface {
+  background: rgba(11, 31, 51, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 41, 59, 0.8);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+.glass-dark-surface {
+  background: rgba(11, 31, 51, 0.80);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Custom Thin Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}

@@ -1,0 +1,140 @@
+# TrustLens default configuration (full CIFAR-10 run, plan sections 5.1-5.8).
+# Every path is relative to the project root (TRUSTLENS_HOME).
+seed: 42
+
+paths:
+  artifacts: artifacts
+  raw: artifacts/raw          # torchvision download cache (CIFAR-10 / CIFAR-100)
+  keys: keys                  # dev keys only
+
+dataset:
+  name: cifar10
+  num_classes: 10
+  class_names: [airplane, automobile, bird, cat, deer, dog, frog, horse, ship, truck]
+  contributors: [C1, C2, C3, C4, C5]
+  per_contributor: 10000      # 5 x 10,000 = the full CIFAR-10 train set
+  heldout_defender: 5000      # from the test split: probe set, Neural Cleanse, trace signature
+  # the rest of the test split is the evaluation set (clean accuracy / attack success rate)
+
+attacks:
+  C3:                         # BadNets backdoor
+    type: badnets
+    rate: 0.05                # 5% of C3 = 500 images
+    target: 0                 # airplane
+    patch_size: 3
+    patch_value: 255          # white square, bottom-right corner
+  C4:                         # targeted label flips
+    type: flip
+    classes: [3, 5]           # cat <-> dog
+    rate: 0.20
+  C5:                         # near-duplicate flooding + OOD injection
+    type: flood_ood
+    dup_base_frac: 0.03       # 300 base images
+    copies: 5                 # 5 augmented near-copies each = 1,500
+    ood_frac: 0.03            # 300 OOD images from CIFAR-100
+    ood_classes: [apple, bridge, maple_tree, mushroom, orange, pear, sweet_pepper, rose, sunflower, tulip]
+    jpeg_quality: 60
+
+training:
+  arch: preact_resnet18
+  epochs: 30
+  batch_size: 128
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 0.0005
+  amp: true
+  augment: [crop]            # random crop 4 px (reflect pad); no flip, so the corner trigger stays put
+  device: auto                # auto | cuda | cpu
+
+scanner:
+  embeddings:
+    backend: clip             # clip | model (fallback: reference-model features)
+    model: ViT-B-32
+    pretrained: laion2b_s34b_b79k
+    batch_size: 256
+  duplicates:
+    k: 10
+    cosine: 0.80              # CLIP kNN proposes pairs at or above this cosine ...
+    aligned_ncc: 0.93         # ... confirmed by flip/shift-aligned pixel correlation
+    min_cluster: 3            # dup_rate counts samples in clusters of size >= 3
+  ood:
+    k: 10
+    percentile: 99
+  labels:
+    folds: 5
+    C: 1.0
+    max_iter: 300
+  poison:
+    nb_clusters: 5            # AC: 2-means (ART default) did not isolate the poison at full scale
+    nb_dims: 10
+    size_threshold: 0.25      # AC: a cluster below 25% of its class ...
+    disagreement_min: 0.50    # ... whose independent CLIP prediction disagrees with the label for >= 50%
+    expected_pp_poison: 0.05  # spectral signatures
+    eps_multiplier: 1.5
+
+auditor:
+  model_dir: artifacts/models/pool          # the model supplied for audit
+  signature: artifacts/models/reference.sig # the vendor's signature for the approved model
+  probe_size: 200
+  agreement_threshold: 0.90
+  kl_threshold: 0.25
+  nc:
+    samples: 5000
+    steps: 1000               # optimisation steps per class (batch 128)
+    round_steps: 10           # cost schedule is re-evaluated every 10 steps
+    batch_size: 128
+    lr: 0.1
+    init_cost: 0.001
+    cost_multiplier: 1.5
+    patience: 5               # rounds
+    attack_succ_threshold: 0.99
+    anomaly_threshold: 2.0
+
+risk:
+  weights:
+    poison_rate: 0.35
+    label_issue_rate: 0.25
+    dup_rate: 0.20
+    ood_rate: 0.10
+    class_skew: 0.10
+  flag_z: 3.5
+  trust_scale: 5.0
+  eps: 1.0e-6
+  mad_floor:                  # minimum robust spread per metric (stops tiny noise from exploding z)
+    poison_rate: 0.004
+    label_issue_rate: 0.004
+    dup_rate: 0.004
+    ood_rate: 0.004
+    class_skew: 0.002
+
+trace:
+  signature_samples: 500
+  percentile: 99              # threshold = this percentile of s on clean held-out images of class t
+  w_pix: 0.5
+  w_feat: 0.5
+
+provenance:
+  preprocess:
+    resize: [32, 32]
+    resample: bilinear
+    color: RGB
+    scale: "1/255"
+
+inference:
+  model_dir: artifacts/models/reference     # the model the service deploys
+  approved_model_dir: artifacts/models/reference
+
+tee:
+  allowlist: configs/allowed_measurements.yaml
+  nonce_ttl_s: 60
+  debug: false
+  measured:                   # what goes into the mock MRENCLAVE
+    - trustlens/api
+    - trustlens/provenance
+    - trustlens/tee
+    - trustlens/common
+    - trustlens/training/models.py
+
+api:
+  host: 127.0.0.1
+  port: 8000

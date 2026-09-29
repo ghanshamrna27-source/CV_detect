@@ -1,0 +1,25 @@
+# Quick profile: the same pipeline on a 5 x 2,000 subset with fewer epochs.
+# Use it to check the whole chain end to end in minutes (TRUSTLENS_PROFILE=quick).
+extends: default.yaml
+
+paths:
+  artifacts: artifacts-quick   # separate from the full run; the dataset download cache is shared
+
+dataset:
+  per_contributor: 2000
+  heldout_defender: 2000
+
+attacks:
+  C3:
+    rate: 0.10                # keep the backdoor learnable on the smaller pool
+
+training:
+  epochs: 30
+
+auditor:
+  nc:
+    samples: 1000
+    steps: 500
+
+trace:
+  signature_samples: 300

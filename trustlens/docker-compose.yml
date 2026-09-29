@@ -1,0 +1,24 @@
+# api (FastAPI inference service + key broker) and dashboard (Streamlit).
+# Run the pipeline first (on the host, or: docker compose run --rm api trustlens run-all --profile quick);
+# artifacts/, keys/ and the allowlist are shared through bind mounts.
+services:
+  api:
+    build: .
+    command: uvicorn trustlens.api.service:app --host 0.0.0.0 --port 8000
+    ports: ["8000:8000"]
+    environment:
+      TRUSTLENS_PROFILE: ${TRUSTLENS_PROFILE:-default}
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./keys:/app/keys
+      - ./configs:/app/configs
+  dashboard:
+    build: .
+    command: streamlit run trustlens/app/dashboard.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    ports: ["8501:8501"]
+    environment:
+      TRUSTLENS_PROFILE: ${TRUSTLENS_PROFILE:-default}
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./keys:/app/keys
+      - ./configs:/app/configs

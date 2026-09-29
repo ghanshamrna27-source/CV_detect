@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+ENV/
+
+# Build and distribution outputs
+dist/
+build/
+.tanstack/
+*.egg-info/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.pyo
+
+# Large zip archives and binaries
+*.zip
+*.tar.gz
+*.7z
+*.rar
+
+# Log files & local dev files
+*.log
+.env
+.env.local
+.vscode/
+.idea/
+
+# Windows system files
+Thumbs.db
+Desktop.ini
